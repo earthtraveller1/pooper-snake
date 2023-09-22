@@ -28,10 +28,12 @@ fn run_command(allocator: std.mem.Allocator, args: []const []const u8) !void {
     switch (result.term) {
         Term.Exited => |exit_code| {
             if (exit_code != 0) {
+                std.log.err("[ERROR]: Failed to execute command '{s}'. Error log: {s}", .{ args[0], result.stderr });
                 return error.ExecutionFailed;
             }
         },
         else => {
+            std.log.err("[ERROR]: Failed to execute command '{s}'. Error log: {s}", .{ args[0], result.stderr });
             return error.ExecutionFailed;
         },
     }
@@ -63,9 +65,7 @@ pub fn build(b: *std.Build) !void {
 
     // Check if the raylib directory exists, and clone the repo if it doesn't.
     const raylib_dir = deps_dir.openDir("raylib", .{}) catch raylib_block: {
-        const args = [_][]const u8{ "git", "clone", "--depth=1", "--branch=4.5.0", "https://github.com/raysan5/raylib.git" };
-        const cwd = try deps_dir.realpathAlloc(allocator, ".");
-        defer allocator.free(cwd);
+        const args = [_][]const u8{ "git", "clone", "--depth=1", "--branch=4.5.0", "https://github.com/raysan5/raylib.git", "deps/raylib" };
 
         _ = try run_command(allocator, &args);
 
@@ -76,7 +76,7 @@ pub fn build(b: *std.Build) !void {
         var args = std.ArrayList([]const u8).init(allocator);
         defer args.deinit();
 
-        const permanent_args = [_][]const u8{ "cmake", "-S", "deps/raylib", "-B", "deps/raylib/build" };
+        const permanent_args = [_][]const u8{ "cmake", "-S", "deps/raylib", "-B", "deps/raylib/build", "-D", "BUILD_EXAMPLES=False" };
         try args.appendSlice(&permanent_args);
 
         if (does_ninja_exist(allocator)) {
@@ -85,6 +85,9 @@ pub fn build(b: *std.Build) !void {
         }
 
         try run_command(allocator, args.items);
+
+        const build_args = [_][]const u8{ "cmake", "--build", "deps/raylib/build" };
+        try run_command(allocator, &build_args);
 
         break :raylib_build_block try raylib_dir.openDir("build", .{});
     };
