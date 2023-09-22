@@ -20,6 +20,23 @@ fn does_ninja_exist(allocator: std.mem.Allocator) bool {
     return false;
 }
 
+fn run_command(allocator: std.mem.Allocator, args: []const []const u8) !void {
+    const result = try std.process.Child.exec(.{ .allocator = allocator, .argv = args });
+
+    const Term = std.process.Child.Term;
+
+    switch (result.term) {
+        Term.Exited => |exit_code| {
+            if (exit_code != 0) {
+                return error.ExecutionFailed;
+            }
+        },
+        else => {
+            return error.ExecutionFailed;
+        },
+    }
+}
+
 // Although this function looks imperative, note that its job is to
 // declaratively construct a build graph that will be executed by an external
 // runner.
