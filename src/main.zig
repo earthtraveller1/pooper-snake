@@ -10,6 +10,7 @@ const assets = struct {
 const PlayerPart = struct {
     position: raylib.Vector2,
     direction: Direction,
+    offset: f32,
     unit_x: f32,
     unit_y: f32,
 };
@@ -58,6 +59,7 @@ pub fn main() !void {
     var player_head: PlayerPart = .{
         .unit_x = 0.0,
         .unit_y = 0.0,
+        .offset = 0.0,
         .position = .{ .x = 0.0, .y = 0.0 },
         .direction = Direction.down,
     };
