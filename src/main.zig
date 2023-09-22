@@ -75,8 +75,6 @@ pub fn main() !void {
             player_position.y = std.math.floor(player_y_unit) * unit_size;
         }
 
-        std.debug.print("Direction: {any}\n", .{player_direction});
-
         switch (player_direction) {
             Direction.left => {
                 player_position.x -= @floatCast(player_speed * unit_size * delta_time);
