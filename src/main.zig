@@ -4,6 +4,7 @@ const raylib = @cImport(@cInclude("raylib.h"));
 const assets = struct {
     const canpooper_png = @embedFile("assets/canpooper.png");
     const burger_png = @embedFile("assets/burger.png");
+    const crate_png = @embedFile("assets/crate.png");
 };
 
 // Measured in pixel.
@@ -29,6 +30,22 @@ pub fn main() !void {
 
     const burger_image = raylib.LoadImageFromMemory(".png", assets.burger_png, assets.burger_png.len);
     const burger_texture = raylib.LoadTextureFromImage(burger_image);
+
+    const crate_image = raylib.LoadImageFromMemory(".png", assets.crate_png, assets.crate_png.len);
+    const crate_texture = raylib.LoadTextureFromImage(crate_image);
+
+    const crate_background = raylib.LoadRenderTexture(window_width, window_height);
+    {
+        raylib.BeginTextureMode(crate_background);
+        var i: u32 = 0;
+        while (i < window_width) : (i += 1) {
+            var j: u32 = 0;
+            while (j < window_height) : (j += 1) {
+                raylib.DrawTexture(crate_texture, @intCast(i * 50), @intCast(j * 50), raylib.WHITE);
+            }
+        }
+        raylib.EndTextureMode();
+    }
 
     var delta_time: f64 = 0;
     var player_position: raylib.Vector2 = .{ .x = 0.0, .y = 0.0 };
@@ -82,6 +99,10 @@ pub fn main() !void {
         raylib.BeginDrawing();
 
         raylib.ClearBackground(raylib.BLACK);
+
+        // Tile the background.
+        raylib.DrawTexture(crate_background.texture, 0, 0, raylib.WHITE);
+
         raylib.DrawTextureV(can_pooper_texture, player_position, raylib.WHITE);
         raylib.DrawTexture(burger_texture, 100, 100, raylib.WHITE);
 
