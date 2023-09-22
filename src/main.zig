@@ -15,7 +15,7 @@ const window_height = 600;
 const unit_size = 50;
 
 // Measured in units per second.
-const player_speed = 3;
+const player_speed = 6;
 
 const Direction = enum { left, right, up, down };
 
@@ -54,25 +54,38 @@ pub fn main() !void {
     var player_y_unit: f32 = 0.0;
 
     var player_direction: Direction = Direction.down;
+    var next_direction: Direction = Direction.down;
 
     while (!raylib.WindowShouldClose()) {
         const start_time = raylib.GetTime();
 
         if (raylib.IsKeyPressed(raylib.KEY_UP)) {
-            player_direction = Direction.up;
-            player_position.x = std.math.floor(player_x_unit) * unit_size;
+            next_direction = Direction.up;
         }
         if (raylib.IsKeyPressed(raylib.KEY_DOWN)) {
-            player_direction = Direction.down;
-            player_position.x = std.math.floor(player_x_unit) * unit_size;
+            next_direction = Direction.down;
         }
         if (raylib.IsKeyPressed(raylib.KEY_RIGHT)) {
-            player_direction = Direction.right;
-            player_position.y = std.math.floor(player_y_unit) * unit_size;
+            next_direction = Direction.right;
         }
         if (raylib.IsKeyPressed(raylib.KEY_LEFT)) {
-            player_direction = Direction.left;
-            player_position.y = std.math.floor(player_y_unit) * unit_size;
+            next_direction = Direction.left;
+        }
+
+        const threshold = 0.1;
+
+        if (next_direction != player_direction) {
+            if (next_direction == Direction.up or next_direction == Direction.down) {
+                if (1.0 - (player_x_unit - std.math.floor(player_x_unit)) < threshold) {
+                    player_direction = next_direction;
+                    player_position.x = std.math.round(player_x_unit) * unit_size;
+                }
+            } else if (next_direction == Direction.left or next_direction == Direction.right) {
+                if (1.0 - (player_y_unit - std.math.floor(player_y_unit)) < threshold) {
+                    player_direction = next_direction;
+                    player_position.y = std.math.round(player_y_unit) * unit_size;
+                }
+            }
         }
 
         switch (player_direction) {
