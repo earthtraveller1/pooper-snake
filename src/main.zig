@@ -35,12 +35,15 @@ pub fn main() !void {
 
     const can_pooper_image = raylib.LoadImageFromMemory(".png", assets.canpooper_png, assets.canpooper_png.len);
     const can_pooper_texture = raylib.LoadTextureFromImage(can_pooper_image);
+    raylib.UnloadImage(can_pooper_image);
 
     const burger_image = raylib.LoadImageFromMemory(".png", assets.burger_png, assets.burger_png.len);
     const burger_texture = raylib.LoadTextureFromImage(burger_image);
+    raylib.UnloadImage(burger_image);
 
     const crate_image = raylib.LoadImageFromMemory(".png", assets.crate_png, assets.crate_png.len);
     const crate_texture = raylib.LoadTextureFromImage(crate_image);
+    raylib.UnloadImage(crate_image);
 
     const crate_background = raylib.LoadRenderTexture(window_width, window_height);
     {
@@ -54,6 +57,8 @@ pub fn main() !void {
         }
         raylib.EndTextureMode();
     }
+
+    raylib.UnloadTexture(crate_texture);
 
     var delta_time: f64 = 0;
     var player_head: PlayerPart = .{
