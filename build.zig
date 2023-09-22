@@ -73,7 +73,7 @@ pub fn build(b: *std.Build) !void {
     };
 
     // Check if the build directory exists, and build the project if it doesn't.
-    const raylib_build_dir = raylib_dir.openDir("build", .{}) catch raylib_build_block: {
+    _ = raylib_dir.openDir("build", .{}) catch raylib_build_block: {
         var args = std.ArrayList([]const u8).init(allocator);
         defer args.deinit();
 
@@ -93,8 +93,6 @@ pub fn build(b: *std.Build) !void {
 
         break :raylib_build_block try raylib_dir.openDir("build", .{});
     };
-
-    _ = raylib_build_dir;
 
     const exe = b.addExecutable(.{
         .name = "pooper-snake",
