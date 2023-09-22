@@ -16,6 +16,8 @@ const unit_size = 50;
 // Measured in units per second.
 const player_speed = 3;
 
+const Direction = enum { left, right, up, down };
+
 pub fn main() !void {
     raylib.InitWindow(window_width, window_height, "Pooper Snake");
     defer raylib.CloseWindow();
@@ -31,10 +33,32 @@ pub fn main() !void {
     var delta_time: f64 = 0;
     var player_position: raylib.Vector2 = .{ .x = 0.0, .y = 0.0 };
 
+    var player_direction: Direction = Direction.down;
+
     while (!raylib.WindowShouldClose()) {
         const start_time = raylib.GetTime();
 
-        player_position.y += @floatCast(player_speed * unit_size * delta_time);
+        if (raylib.IsKeyPressed(raylib.KEY_UP)) {
+            player_direction = Direction.up;
+        }
+        if (raylib.IsKeyPressed(raylib.KEY_DOWN)) {
+            player_direction = Direction.down;
+        }
+        if (raylib.IsKeyPressed(raylib.KEY_RIGHT)) {
+            player_direction = Direction.right;
+        }
+        if (raylib.IsKeyPressed(raylib.KEY_LEFT)) {
+            player_direction = Direction.left;
+        }
+
+        std.debug.print("Direction: {any}\n", .{player_direction});
+
+        switch (player_direction) {
+            Direction.left => player_position.x -= @floatCast(player_speed * unit_size * delta_time),
+            Direction.right => player_position.x += @floatCast(player_speed * unit_size * delta_time),
+            Direction.up => player_position.y -= @floatCast(player_speed * unit_size * delta_time),
+            Direction.down => player_position.y += @floatCast(player_speed * unit_size * delta_time),
+        }
 
         raylib.BeginDrawing();
 
@@ -43,8 +67,6 @@ pub fn main() !void {
         raylib.DrawTexture(burger_texture, 100, 100, raylib.WHITE);
 
         raylib.EndDrawing();
-
-        raylib.PollInputEvents();
 
         const end_time = raylib.GetTime();
         delta_time = end_time - start_time;
