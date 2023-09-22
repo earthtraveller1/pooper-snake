@@ -72,6 +72,7 @@ pub fn build(b: *std.Build) !void {
         break :raylib_block try deps_dir.openDir("raylib", .{});
     };
 
+    // Check if the build directory exists, and build the project if it doesn't.
     const raylib_build_dir = raylib_dir.openDir("build", .{}) catch raylib_build_block: {
         var args = std.ArrayList([]const u8).init(allocator);
         defer args.deinit();
@@ -79,6 +80,7 @@ pub fn build(b: *std.Build) !void {
         const permanent_args = [_][]const u8{ "cmake", "-S", "deps/raylib", "-B", "deps/raylib/build", "-D", "BUILD_EXAMPLES=False" };
         try args.appendSlice(&permanent_args);
 
+        // Prefer to use Ninja as the build system if it exists, mainly because it's faster.
         if (does_ninja_exist(allocator)) {
             try args.append("-G");
             try args.append("Ninja");
