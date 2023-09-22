@@ -67,7 +67,7 @@ pub fn build(b: *std.Build) !void {
         const cwd = try deps_dir.realpathAlloc(allocator, ".");
         defer allocator.free(cwd);
 
-        _ = try std.process.Child.exec(.{ .allocator = allocator, .argv = &args, .cwd = cwd });
+        _ = try run_command(allocator, &args);
 
         break :raylib_block try deps_dir.openDir("raylib", .{});
     };
@@ -84,19 +84,7 @@ pub fn build(b: *std.Build) !void {
             try args.append("Ninja");
         }
 
-        const result = try std.process.Child.exec(.{ .allocator = allocator, .argv = args.items });
-
-        const Term = std.process.Child.Term;
-
-        switch (result.term) {
-            Term.Exited => |exit_code| {
-                if (exit_code != 0) {
-                    std.log.err("ERROR: CMake build failed! Log: {s}", .{result.stderr});
-                    return error.CMakeBuildError;
-                }
-            },
-            else => {},
-        }
+        try run_command(allocator, args.items);
 
         break :raylib_build_block try raylib_dir.openDir("build", .{});
     };
