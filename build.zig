@@ -1,9 +1,31 @@
 const std = @import("std");
 
+fn does_ninja_exist(allocator: std.mem.Allocator) bool {
+    const args = [_][]const u8{ "ninja", "--version" };
+    const result = std.process.Child.exec(.{ .allocator = allocator, .argv = &args }) catch {
+        return false;
+    };
+
+    const Term = std.process.Child.Term;
+
+    switch (result.term) {
+        Term.Exited => |exit_code| {
+            return exit_code == 0;
+        },
+        else => {
+            return false;
+        },
+    }
+
+    return false;
+}
+
 // Although this function looks imperative, note that its job is to
 // declaratively construct a build graph that will be executed by an external
 // runner.
-pub fn build(b: *std.Build) void {
+pub fn build(b: *std.Build) !void {
+    const allocator = std.heap.page_allocator;
+
     // Standard target options allows the person running `zig build` to choose
     // what target to build for. Here we do not override the defaults, which
     // means any target is allowed, and the default is native. Other options
@@ -14,6 +36,55 @@ pub fn build(b: *std.Build) void {
     // between Debug, ReleaseSafe, ReleaseFast, and ReleaseSmall. Here we do not
     // set a preferred release mode, allowing the user to decide how to optimize.
     const optimize = b.standardOptimizeOption(.{});
+
+    // Open the directory where all the dependencies are going to go, and create it
+    // if it doesn't exist.
+    const deps_dir = std.fs.cwd().openDir("deps", .{}) catch deps_block: {
+        try std.fs.cwd().makeDir("deps");
+        break :deps_block try std.fs.cwd().openDir("deps", .{});
+    };
+
+    // Check if the raylib directory exists, and clone the repo if it doesn't.
+    const raylib_dir = deps_dir.openDir("raylib", .{}) catch raylib_block: {
+        const args = [_][]const u8{ "git", "clone", "--depth=1", "--branch=4.5.0", "https://github.com/raysan5/raylib.git" };
+        const cwd = try deps_dir.realpathAlloc(allocator, ".");
+        defer allocator.free(cwd);
+
+        _ = try std.process.Child.exec(.{ .allocator = allocator, .argv = &args, .cwd = cwd });
+
+        break :raylib_block try deps_dir.openDir("raylib", .{});
+    };
+
+    const raylib_build_dir = raylib_dir.openDir("build", .{}) catch raylib_build_block: {
+        var args = std.ArrayList([]const u8).init(allocator);
+        defer args.deinit();
+
+        const permanent_args = [_][]const u8{ "cmake", "-S", "deps/raylib", "-B", "deps/raylib/build" };
+        try args.appendSlice(&permanent_args);
+
+        if (does_ninja_exist(allocator)) {
+            try args.append("-G");
+            try args.append("Ninja");
+        }
+
+        const result = try std.process.Child.exec(.{ .allocator = allocator, .argv = args.items });
+
+        const Term = std.process.Child.Term;
+
+        switch (result.term) {
+            Term.Exited => |exit_code| {
+                if (exit_code != 0) {
+                    std.log.err("ERROR: CMake build failed! Log: {s}", .{result.stderr});
+                    return error.CMakeBuildError;
+                }
+            },
+            else => {},
+        }
+
+        break :raylib_build_block try raylib_dir.openDir("build", .{});
+    };
+
+    _ = raylib_build_dir;
 
     const exe = b.addExecutable(.{
         .name = "pooper-snake",
