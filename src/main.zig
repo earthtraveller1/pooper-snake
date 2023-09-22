@@ -16,11 +16,11 @@ const PlayerPart = struct {
 };
 
 // Measured in pixel.
-const window_width = 800;
-const window_height = 600;
+const window_width = 1400;
+const window_height = 1000;
 
 // Measured in pixels.
-const unit_size = 50;
+const unit_size = 100;
 
 // Measured in units per second.
 const player_speed = 6;
@@ -49,7 +49,7 @@ pub fn main() !void {
         while (i < window_width) : (i += 1) {
             var j: u32 = 0;
             while (j < window_height) : (j += 1) {
-                raylib.DrawTexture(crate_texture, @intCast(i * 50), @intCast(j * 50), raylib.WHITE);
+                raylib.DrawTexture(crate_texture, @intCast(i * unit_size), @intCast(j * unit_size), raylib.WHITE);
             }
         }
         raylib.EndTextureMode();
