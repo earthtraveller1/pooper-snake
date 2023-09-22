@@ -33,6 +33,9 @@ pub fn main() !void {
     var delta_time: f64 = 0;
     var player_position: raylib.Vector2 = .{ .x = 0.0, .y = 0.0 };
 
+    var player_x_unit: f32 = 0.0;
+    var player_y_unit: f32 = 0.0;
+
     var player_direction: Direction = Direction.down;
 
     while (!raylib.WindowShouldClose()) {
@@ -40,24 +43,40 @@ pub fn main() !void {
 
         if (raylib.IsKeyPressed(raylib.KEY_UP)) {
             player_direction = Direction.up;
+            player_position.x = std.math.floor(player_x_unit) * unit_size;
         }
         if (raylib.IsKeyPressed(raylib.KEY_DOWN)) {
             player_direction = Direction.down;
+            player_position.x = std.math.floor(player_x_unit) * unit_size;
         }
         if (raylib.IsKeyPressed(raylib.KEY_RIGHT)) {
             player_direction = Direction.right;
+            player_position.y = std.math.floor(player_y_unit) * unit_size;
         }
         if (raylib.IsKeyPressed(raylib.KEY_LEFT)) {
             player_direction = Direction.left;
+            player_position.y = std.math.floor(player_y_unit) * unit_size;
         }
 
         std.debug.print("Direction: {any}\n", .{player_direction});
 
         switch (player_direction) {
-            Direction.left => player_position.x -= @floatCast(player_speed * unit_size * delta_time),
-            Direction.right => player_position.x += @floatCast(player_speed * unit_size * delta_time),
-            Direction.up => player_position.y -= @floatCast(player_speed * unit_size * delta_time),
-            Direction.down => player_position.y += @floatCast(player_speed * unit_size * delta_time),
+            Direction.left => {
+                player_position.x -= @floatCast(player_speed * unit_size * delta_time);
+                player_x_unit -= @floatCast(player_speed * delta_time);
+            },
+            Direction.right => {
+                player_position.x += @floatCast(player_speed * unit_size * delta_time);
+                player_x_unit += @floatCast(player_speed * delta_time);
+            },
+            Direction.up => {
+                player_position.y -= @floatCast(player_speed * unit_size * delta_time);
+                player_y_unit -= @floatCast(player_speed * delta_time);
+            },
+            Direction.down => {
+                player_position.y += @floatCast(player_speed * unit_size * delta_time);
+                player_y_unit += @floatCast(player_speed * delta_time);
+            },
         }
 
         raylib.BeginDrawing();
