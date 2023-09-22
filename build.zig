@@ -1,6 +1,6 @@
 const std = @import("std");
 
-fn does_ninja_exist(allocator: std.mem.Allocator) bool {
+fn doesNinjaExist(allocator: std.mem.Allocator) bool {
     const args = [_][]const u8{ "ninja", "--version" };
     const result = std.process.Child.exec(.{ .allocator = allocator, .argv = &args }) catch {
         return false;
@@ -20,7 +20,7 @@ fn does_ninja_exist(allocator: std.mem.Allocator) bool {
     return false;
 }
 
-fn run_command(allocator: std.mem.Allocator, args: []const []const u8) !void {
+fn runCommand(allocator: std.mem.Allocator, args: []const []const u8) !void {
     const result = try std.process.Child.exec(.{ .allocator = allocator, .argv = args });
 
     const Term = std.process.Child.Term;
@@ -67,7 +67,7 @@ pub fn build(b: *std.Build) !void {
     const raylib_dir = deps_dir.openDir("raylib", .{}) catch raylib_block: {
         const args = [_][]const u8{ "git", "clone", "--depth=1", "--branch=4.5.0", "https://github.com/raysan5/raylib.git", "deps/raylib" };
 
-        _ = try run_command(allocator, &args);
+        _ = try runCommand(allocator, &args);
 
         break :raylib_block try deps_dir.openDir("raylib", .{});
     };
@@ -81,15 +81,15 @@ pub fn build(b: *std.Build) !void {
         try args.appendSlice(&permanent_args);
 
         // Prefer to use Ninja as the build system if it exists, mainly because it's faster.
-        if (does_ninja_exist(allocator)) {
+        if (doesNinjaExist(allocator)) {
             try args.append("-G");
             try args.append("Ninja");
         }
 
-        try run_command(allocator, args.items);
+        try runCommand(allocator, args.items);
 
         const build_args = [_][]const u8{ "cmake", "--build", "deps/raylib/build" };
-        try run_command(allocator, &build_args);
+        try runCommand(allocator, &build_args);
 
         break :raylib_build_block try raylib_dir.openDir("build", .{});
     };
