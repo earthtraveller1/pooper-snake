@@ -121,15 +121,15 @@ pub fn main() !void {
         raylib.DrawTexture(crate_background.texture, 0, 0, raylib.WHITE);
         raylib.DrawTexture(burger_texture, 400, 200, raylib.WHITE);
 
-        raylib.DrawTexture(can_pooper_texture, @intCast(player_x * unit_size), @intCast(player_y * unit_size), raylib.WHITE);
-
         {
             var node = player_tail.first;
             while (node) |inner_node| {
-                raylib.DrawTexture(can_pooper_texture, @intCast(inner_node.*.data.unit_x * unit_size), @intCast(inner_node.*.data.unit_y * unit_size), raylib.WHITE);
+                raylib.DrawTexture(can_pooper_texture, @intCast(inner_node.*.data.unit_x * unit_size), @intCast(inner_node.*.data.unit_y * unit_size), raylib.BLUE);
                 node = inner_node.next;
             }
         }
+
+        raylib.DrawTexture(can_pooper_texture, @intCast(player_x * unit_size), @intCast(player_y * unit_size), raylib.WHITE);
 
         raylib.EndDrawing();
 
