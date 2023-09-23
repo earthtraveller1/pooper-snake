@@ -28,9 +28,16 @@ const movement_delay = frames_per_second / 3;
 
 const Direction = enum { left, right, up, down };
 
+fn create_node(comptime T: type, allocator: std.mem.Allocator, data: T) !*std.DoublyLinkedList(T).Node {
+    const node = try allocator.create(std.DoublyLinkedList(T).Node);
+    node.*.prev = null;
+    node.*.next = null;
+    node.*.data = data;
+    return node;
+}
+
 pub fn main() !void {
     const allocator = std.heap.page_allocator;
-    _ = allocator;
 
     raylib.InitWindow(window_width, window_height, "Pooper Snake");
     defer raylib.CloseWindow();
@@ -69,6 +76,18 @@ pub fn main() !void {
 
     var player_direction: Direction = Direction.right;
 
+    const PlayerPartList = std.DoublyLinkedList(PlayerPart);
+    var player_tail = PlayerPartList{};
+
+    // Destroy everything in the linked list.
+    defer {
+        var node = player_tail.first;
+        while (node) |inner_node| {
+            allocator.destroy(inner_node);
+            node = inner_node.next;
+        }
+    }
+
     var movement_countdown: i16 = movement_delay;
 
     while (!raylib.WindowShouldClose()) {
@@ -87,6 +106,7 @@ pub fn main() !void {
 
         if (movement_countdown <= 0) {
             movement_countdown = movement_delay;
+            player_tail.append(try create_node(PlayerPart, allocator, PlayerPart{ .unit_x = player_x, .unit_y = player_y }));
 
             switch (player_direction) {
                 Direction.up => player_y -= 1,
@@ -99,9 +119,17 @@ pub fn main() !void {
         raylib.BeginDrawing();
 
         raylib.DrawTexture(crate_background.texture, 0, 0, raylib.WHITE);
+        raylib.DrawTexture(burger_texture, 400, 200, raylib.WHITE);
 
         raylib.DrawTexture(can_pooper_texture, @intCast(player_x * unit_size), @intCast(player_y * unit_size), raylib.WHITE);
-        raylib.DrawTexture(burger_texture, 400, 200, raylib.WHITE);
+
+        {
+            var node = player_tail.first;
+            while (node) |inner_node| {
+                raylib.DrawTexture(can_pooper_texture, @intCast(inner_node.*.data.unit_x * unit_size), @intCast(inner_node.*.data.unit_y * unit_size), raylib.WHITE);
+                node = inner_node.next;
+            }
+        }
 
         raylib.EndDrawing();
 
