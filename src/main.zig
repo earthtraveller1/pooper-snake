@@ -24,7 +24,7 @@ const unit_size = 100;
 
 // Measured in frames.
 const frames_per_second = 60;
-const movement_delay = frames_per_second / 2;
+const movement_delay = frames_per_second / 3;
 
 const Direction = enum { left, right, up, down };
 
@@ -67,12 +67,33 @@ pub fn main() !void {
     var player_x: u32 = initial_head_x;
     var player_y: u32 = initial_head_y;
 
+    var player_direction: Direction = Direction.right;
+
     var movement_countdown: i16 = movement_delay;
 
     while (!raylib.WindowShouldClose()) {
+        if (raylib.IsKeyPressed(raylib.KEY_UP)) {
+            player_direction = Direction.up;
+        }
+        if (raylib.IsKeyPressed(raylib.KEY_DOWN)) {
+            player_direction = Direction.down;
+        }
+        if (raylib.IsKeyPressed(raylib.KEY_RIGHT)) {
+            player_direction = Direction.right;
+        }
+        if (raylib.IsKeyPressed(raylib.KEY_LEFT)) {
+            player_direction = Direction.left;
+        }
+
         if (movement_countdown <= 0) {
             movement_countdown = movement_delay;
-            player_y += 1;
+
+            switch (player_direction) {
+                Direction.up => player_y -= 1,
+                Direction.down => player_y += 1,
+                Direction.right => player_x += 1,
+                Direction.left => player_x -= 1,
+            }
         }
 
         raylib.BeginDrawing();
