@@ -106,6 +106,8 @@ pub fn main() !void {
     var player_direction: Direction = Direction.right;
 
     var player_tail = PlayerPartList{};
+    player_tail.append(try create_node(PlayerPart, allocator, PlayerPart{ .unit_x = player_x - 1, .unit_y = player_y }));
+    player_tail.append(try create_node(PlayerPart, allocator, PlayerPart{ .unit_x = player_x - 2, .unit_y = player_y }));
 
     var burger_pos = random_burger_position(random_generator.random(), player_tail);
 
@@ -121,6 +123,8 @@ pub fn main() !void {
     var movement_countdown: i16 = movement_delay;
 
     while (!raylib.WindowShouldClose()) {
+        const player_at_burger: bool = player_x == burger_pos.x and player_y == burger_pos.y;
+
         if (raylib.IsKeyPressed(raylib.KEY_UP)) {
             player_direction = Direction.up;
         }
@@ -138,16 +142,26 @@ pub fn main() !void {
             movement_countdown = movement_delay;
             player_tail.append(try create_node(PlayerPart, allocator, PlayerPart{ .unit_x = player_x, .unit_y = player_y }));
 
+            std.debug.print("Player at burger: {}\n", .{player_at_burger});
+            std.debug.print("Player position: ({d}, {d})\n", .{ player_x, player_y });
+            std.debug.print("Burger position: ({d}, {d})\n", .{ burger_pos.x, burger_pos.y });
+
             switch (player_direction) {
                 Direction.up => player_y -= 1,
                 Direction.down => player_y += 1,
                 Direction.right => player_x += 1,
                 Direction.left => player_x -= 1,
             }
-        }
 
-        if (player_x == burger_pos.x and player_y == burger_pos.y) {
-            burger_pos = random_burger_position(random_generator.random(), player_tail);
+            // Grow the tail, if we are at a burger.
+            if (!player_at_burger) {
+                const to_be_removed = player_tail.popFirst();
+                if (to_be_removed) |to_be_removed_real| {
+                    allocator.destroy(to_be_removed_real);
+                }
+            } else {
+                burger_pos = random_burger_position(random_generator.random(), player_tail);
+            }
         }
 
         raylib.BeginDrawing();
