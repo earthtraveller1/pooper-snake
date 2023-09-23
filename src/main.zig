@@ -142,10 +142,6 @@ pub fn main() !void {
             movement_countdown = movement_delay;
             player_tail.append(try create_node(PlayerPart, allocator, PlayerPart{ .unit_x = player_x, .unit_y = player_y }));
 
-            std.debug.print("Player at burger: {}\n", .{player_at_burger});
-            std.debug.print("Player position: ({d}, {d})\n", .{ player_x, player_y });
-            std.debug.print("Burger position: ({d}, {d})\n", .{ burger_pos.x, burger_pos.y });
-
             switch (player_direction) {
                 Direction.up => player_y -= 1,
                 Direction.down => player_y += 1,
