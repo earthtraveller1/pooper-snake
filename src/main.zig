@@ -35,6 +35,7 @@ const Direction = enum { left, right, up, down };
 
 fn create_node(comptime T: type, allocator: std.mem.Allocator, data: T) !*std.DoublyLinkedList(T).Node {
     const node = try allocator.create(std.DoublyLinkedList(T).Node);
+    // Setting these to null, just in case.
     node.*.prev = null;
     node.*.next = null;
     node.*.data = data;
@@ -64,6 +65,7 @@ fn random_burger_position(random_generator: std.rand.Random, player_parts: Playe
 }
 
 pub fn main() !void {
+    // I might consider using a fixed buffer allocator to make everything faster (since we are using a linked list).
     const allocator = std.heap.page_allocator;
 
     raylib.InitWindow(window_width, window_height, "Pooper Snake");
@@ -84,6 +86,7 @@ pub fn main() !void {
     raylib.UnloadImage(crate_image);
 
     const crate_background = raylib.LoadRenderTexture(window_width, window_height);
+    // Generate a repeating crate background for the tiles.
     {
         raylib.BeginTextureMode(crate_background);
         var i: u32 = 0;
@@ -138,6 +141,10 @@ pub fn main() !void {
             player_direction = Direction.left;
         }
 
+        // Basically, how this works is that there is a counter, called movemen-
+        // t_timer. Every frame, we would decrease the counter by one, and when
+        // the timer reaches zero, that's when we reset it and perform the move-
+        // ment. This is how I implemented moving at certain time intervals.
         if (movement_countdown <= 0) {
             movement_countdown = movement_delay;
             player_tail.append(try create_node(PlayerPart, allocator, PlayerPart{ .unit_x = player_x, .unit_y = player_y }));
@@ -165,6 +172,8 @@ pub fn main() !void {
         raylib.DrawTexture(crate_background.texture, 0, 0, raylib.WHITE);
         raylib.DrawTexture(burger_texture, @intCast(burger_pos.x * unit_size), @intCast(burger_pos.y * unit_size), raylib.WHITE);
 
+        // I know that this looks weird, but we are just iterating through the
+        // linked list and rendering all the tail components.
         {
             var node = player_tail.first;
             while (node) |inner_node| {
