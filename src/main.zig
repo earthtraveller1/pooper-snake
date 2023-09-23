@@ -132,7 +132,7 @@ pub fn main() !void {
 
     var has_player_lost: bool = false;
 
-    while (!raylib.WindowShouldClose()) {
+    main_loop: while (!raylib.WindowShouldClose()) {
         if (has_player_lost) {
             raylib.BeginDrawing();
 
@@ -221,6 +221,11 @@ pub fn main() !void {
             {
                 var node = player_tail.first;
                 while (node) |inner_node| {
+                    if (inner_node.*.data.unit_x == player_x and inner_node.*.data.unit_y == player_y) {
+                        has_player_lost = true;
+                        continue :main_loop;
+                    }
+
                     raylib.DrawTexture(can_pooper_texture, @intCast(inner_node.*.data.unit_x * unit_size), @intCast(inner_node.*.data.unit_y * unit_size), raylib.BLUE);
                     node = inner_node.next;
                 }
