@@ -8,12 +8,8 @@ const assets = struct {
 };
 
 const PlayerPart = struct {
-    position: raylib.Vector2,
-    direction: Direction,
-    next_direction: Direction,
-    offset: f32,
-    unit_x: f32,
-    unit_y: f32,
+    unit_x: u32,
+    unit_y: u32,
 };
 
 const Rotation = struct {
@@ -35,6 +31,7 @@ const Direction = enum { left, right, up, down };
 
 pub fn main() !void {
     const allocator = std.heap.page_allocator;
+    _ = allocator;
 
     raylib.InitWindow(window_width, window_height, "Pooper Snake");
     defer raylib.CloseWindow();
@@ -70,111 +67,19 @@ pub fn main() !void {
 
     var delta_time: f64 = 0;
 
-    var player_parts = std.ArrayList(PlayerPart).init(allocator);
-    try player_parts.append(.{
-        .unit_x = 0.0,
-        .unit_y = 0.0,
-        .offset = 0.0,
-        .position = .{ .x = 0.0, .y = 0.0 },
-        .direction = Direction.down,
-        .next_direction = Direction.down,
-    });
-    try player_parts.append(.{
-        .unit_x = 0.0,
-        .unit_y = 1.0,
-        .offset = 1.0 / @as(f32, player_speed),
-        .position = .{ .x = 0.0, .y = 0.0 },
-        .direction = Direction.down,
-        .next_direction = Direction.down,
-    });
-
-    var rotations = std.ArrayList(Rotation).init(allocator);
-
-    const player_head = &player_parts.items[0];
-
     while (!raylib.WindowShouldClose()) {
         const start_time = raylib.GetTime();
 
-        if (raylib.IsKeyPressed(raylib.KEY_UP)) {
-            player_head.*.next_direction = Direction.up;
-            try rotations.append(.{ .new_direction = player_head.*.next_direction, .timestamp = raylib.GetTime() });
-        }
-        if (raylib.IsKeyPressed(raylib.KEY_DOWN)) {
-            player_head.*.next_direction = Direction.down;
-            try rotations.append(.{ .new_direction = player_head.*.next_direction, .timestamp = raylib.GetTime() });
-        }
-        if (raylib.IsKeyPressed(raylib.KEY_RIGHT)) {
-            player_head.*.next_direction = Direction.right;
-            try rotations.append(.{ .new_direction = player_head.*.next_direction, .timestamp = raylib.GetTime() });
-        }
-        if (raylib.IsKeyPressed(raylib.KEY_LEFT)) {
-            player_head.*.next_direction = Direction.left;
-            try rotations.append(.{ .new_direction = player_head.*.next_direction, .timestamp = raylib.GetTime() });
-        }
-
-        const threshold = 0.1;
-
-        for (player_parts.items) |*player_part| {
-            if (rotations.items.len >= 1) {
-                var i: i32 = @intCast(rotations.items.len - 1);
-                while (i >= 0) : (i -= 1) {
-                    if (rotations.items[@intCast(i)].timestamp + player_part.offset < raylib.GetTime()) {
-                        player_part.next_direction = rotations.items[@intCast(i)].new_direction;
-                        break;
-                    }
-                }
-            }
-
-            if (player_part.next_direction != player_part.direction) {
-                if (player_part.next_direction == Direction.up or player_part.next_direction == Direction.down) {
-                    if (1.0 - (player_part.unit_x - std.math.floor(player_head.unit_x)) < threshold) {
-                        player_part.direction = player_part.next_direction;
-                        player_part.position.x = std.math.round(player_head.unit_x) * unit_size;
-                    }
-                } else if (player_part.next_direction == Direction.left or player_part.next_direction == Direction.right) {
-                    if (1.0 - (player_part.unit_y - std.math.floor(player_head.unit_y)) < threshold) {
-                        player_part.direction = player_part.next_direction;
-                        player_part.position.y = std.math.round(player_head.unit_y) * unit_size;
-                    }
-                }
-            }
-
-            switch (player_part.direction) {
-                Direction.left => {
-                    player_part.position.x -= @floatCast(player_speed * unit_size * delta_time);
-                    player_part.unit_x -= @floatCast(player_speed * delta_time);
-                },
-                Direction.right => {
-                    player_part.position.x += @floatCast(player_speed * unit_size * delta_time);
-                    player_part.unit_x += @floatCast(player_speed * delta_time);
-                },
-                Direction.up => {
-                    player_part.position.y -= @floatCast(player_speed * unit_size * delta_time);
-                    player_part.unit_y -= @floatCast(player_speed * delta_time);
-                },
-                Direction.down => {
-                    player_part.position.y += @floatCast(player_speed * unit_size * delta_time);
-                    player_part.unit_y += @floatCast(player_speed * delta_time);
-                },
-            }
-        }
-
         raylib.BeginDrawing();
 
-        raylib.ClearBackground(raylib.BLACK);
-
-        // Tile the background.
         raylib.DrawTexture(crate_background.texture, 0, 0, raylib.WHITE);
 
-        for (player_parts.items) |part| {
-            raylib.DrawTextureV(can_pooper_texture, part.position, raylib.WHITE);
-        }
-
-        raylib.DrawTexture(burger_texture, 100, 100, raylib.WHITE);
+        raylib.DrawTexture(can_pooper_texture, 100, 100, raylib.WHITE);
+        raylib.DrawTexture(burger_texture, 400, 200, raylib.WHITE);
 
         raylib.EndDrawing();
 
         const end_time = raylib.GetTime();
-        delta_time = end_time - start_time;
+        delta_time = start_time - end_time;
     }
 }
