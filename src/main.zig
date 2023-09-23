@@ -83,8 +83,8 @@ pub fn main() !void {
     defer {
         var node = player_tail.first;
         while (node) |inner_node| {
-            allocator.destroy(inner_node);
             node = inner_node.next;
+            allocator.destroy(inner_node);
         }
     }
 
