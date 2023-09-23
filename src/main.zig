@@ -12,11 +12,6 @@ const PlayerPart = struct {
     unit_y: u32,
 };
 
-const Rotation = struct {
-    new_direction: Direction,
-    timestamp: f64,
-};
-
 // Measured in pixel.
 const window_width = 1400;
 const window_height = 1000;
