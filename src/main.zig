@@ -5,6 +5,7 @@ const assets = struct {
     const canpooper_png = @embedFile("assets/canpooper.png");
     const burger_png = @embedFile("assets/burger.png");
     const crate_png = @embedFile("assets/crate.png");
+    const angry_pooper_png = @embedFile("assets/angry_pooper.png");
 };
 
 const PlayerPart = struct {
@@ -85,6 +86,10 @@ pub fn main() !void {
     const crate_texture = raylib.LoadTextureFromImage(crate_image);
     raylib.UnloadImage(crate_image);
 
+    const angry_pooper_image = raylib.LoadImageFromMemory(".png", assets.angry_pooper_png, assets.angry_pooper_png.len);
+    const angry_pooper_texture = raylib.LoadTextureFromImage(angry_pooper_image);
+    raylib.UnloadImage(angry_pooper_image);
+
     const crate_background = raylib.LoadRenderTexture(window_width, window_height);
     // Generate a repeating crate background for the tiles.
     {
@@ -125,67 +130,107 @@ pub fn main() !void {
 
     var movement_countdown: i16 = movement_delay;
 
+    var has_player_lost: bool = false;
+
     while (!raylib.WindowShouldClose()) {
-        const player_at_burger: bool = player_x == burger_pos.x and player_y == burger_pos.y;
+        if (has_player_lost) {
+            raylib.BeginDrawing();
 
-        if (raylib.IsKeyPressed(raylib.KEY_UP)) {
-            player_direction = Direction.up;
-        }
-        if (raylib.IsKeyPressed(raylib.KEY_DOWN)) {
-            player_direction = Direction.down;
-        }
-        if (raylib.IsKeyPressed(raylib.KEY_RIGHT)) {
-            player_direction = Direction.right;
-        }
-        if (raylib.IsKeyPressed(raylib.KEY_LEFT)) {
-            player_direction = Direction.left;
-        }
+            const angry_pooper_x = @divFloor(window_width - angry_pooper_texture.width, 2);
+            const angry_pooper_y = @divFloor(window_height - angry_pooper_texture.height, 2);
+            raylib.DrawTexture(angry_pooper_texture, angry_pooper_x, angry_pooper_y, raylib.WHITE);
 
-        // Basically, how this works is that there is a counter, called movemen-
-        // t_timer. Every frame, we would decrease the counter by one, and when
-        // the timer reaches zero, that's when we reset it and perform the move-
-        // ment. This is how I implemented moving at certain time intervals.
-        if (movement_countdown <= 0) {
-            movement_countdown = movement_delay;
-            player_tail.append(try create_node(PlayerPart, allocator, PlayerPart{ .unit_x = player_x, .unit_y = player_y }));
+            raylib.EndDrawing();
+        } else {
+            const player_at_burger: bool = player_x == burger_pos.x and player_y == burger_pos.y;
 
-            switch (player_direction) {
-                Direction.up => player_y -= 1,
-                Direction.down => player_y += 1,
-                Direction.right => player_x += 1,
-                Direction.left => player_x -= 1,
+            if (raylib.IsKeyPressed(raylib.KEY_UP)) {
+                player_direction = Direction.up;
+            }
+            if (raylib.IsKeyPressed(raylib.KEY_DOWN)) {
+                player_direction = Direction.down;
+            }
+            if (raylib.IsKeyPressed(raylib.KEY_RIGHT)) {
+                player_direction = Direction.right;
+            }
+            if (raylib.IsKeyPressed(raylib.KEY_LEFT)) {
+                player_direction = Direction.left;
             }
 
-            // Grow the tail, if we are at a burger.
-            if (!player_at_burger) {
-                const to_be_removed = player_tail.popFirst();
-                if (to_be_removed) |to_be_removed_real| {
-                    allocator.destroy(to_be_removed_real);
+            // Basically, how this works is that there is a counter, called movemen-
+            // t_timer. Every frame, we would decrease the counter by one, and when
+            // the timer reaches zero, that's when we reset it and perform the move-
+            // ment. This is how I implemented moving at certain time intervals.
+            if (movement_countdown <= 0) {
+                movement_countdown = movement_delay;
+                player_tail.append(try create_node(PlayerPart, allocator, PlayerPart{ .unit_x = player_x, .unit_y = player_y }));
+
+                switch (player_direction) {
+                    Direction.up => {
+                        if (player_y > 0) {
+                            player_y -= 1;
+                        } else {
+                            has_player_lost = true;
+                            continue;
+                        }
+                    },
+                    Direction.down => {
+                        if (player_y < game_height - 1) {
+                            player_y += 1;
+                        } else {
+                            has_player_lost = true;
+                            continue;
+                        }
+                    },
+                    Direction.right => {
+                        if (player_x < game_width - 1) {
+                            player_x += 1;
+                        } else {
+                            has_player_lost = true;
+                            continue;
+                        }
+                    },
+                    Direction.left => {
+                        if (player_x > 0) {
+                            player_x -= 1;
+                        } else {
+                            has_player_lost = true;
+                            continue;
+                        }
+                    },
                 }
-            } else {
-                burger_pos = random_burger_position(random_generator.random(), player_tail);
+
+                // Grow the tail, if we are at a burger.
+                if (!player_at_burger) {
+                    const to_be_removed = player_tail.popFirst();
+                    if (to_be_removed) |to_be_removed_real| {
+                        allocator.destroy(to_be_removed_real);
+                    }
+                } else {
+                    burger_pos = random_burger_position(random_generator.random(), player_tail);
+                }
             }
-        }
 
-        raylib.BeginDrawing();
+            raylib.BeginDrawing();
 
-        raylib.DrawTexture(crate_background.texture, 0, 0, raylib.WHITE);
-        raylib.DrawTexture(burger_texture, @intCast(burger_pos.x * unit_size), @intCast(burger_pos.y * unit_size), raylib.WHITE);
+            raylib.DrawTexture(crate_background.texture, 0, 0, raylib.WHITE);
+            raylib.DrawTexture(burger_texture, @intCast(burger_pos.x * unit_size), @intCast(burger_pos.y * unit_size), raylib.WHITE);
 
-        // I know that this looks weird, but we are just iterating through the
-        // linked list and rendering all the tail components.
-        {
-            var node = player_tail.first;
-            while (node) |inner_node| {
-                raylib.DrawTexture(can_pooper_texture, @intCast(inner_node.*.data.unit_x * unit_size), @intCast(inner_node.*.data.unit_y * unit_size), raylib.BLUE);
-                node = inner_node.next;
+            // I know that this looks weird, but we are just iterating through the
+            // linked list and rendering all the tail components.
+            {
+                var node = player_tail.first;
+                while (node) |inner_node| {
+                    raylib.DrawTexture(can_pooper_texture, @intCast(inner_node.*.data.unit_x * unit_size), @intCast(inner_node.*.data.unit_y * unit_size), raylib.BLUE);
+                    node = inner_node.next;
+                }
             }
+
+            raylib.DrawTexture(can_pooper_texture, @intCast(player_x * unit_size), @intCast(player_y * unit_size), raylib.WHITE);
+
+            raylib.EndDrawing();
+
+            movement_countdown -= 1;
         }
-
-        raylib.DrawTexture(can_pooper_texture, @intCast(player_x * unit_size), @intCast(player_y * unit_size), raylib.WHITE);
-
-        raylib.EndDrawing();
-
-        movement_countdown -= 1;
     }
 }
