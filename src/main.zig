@@ -12,6 +12,8 @@ const PlayerPart = struct {
     unit_y: u32,
 };
 
+const PlayerPartList = std.DoublyLinkedList(PlayerPart);
+
 // Measured in pixel.
 const window_width = 1400;
 const window_height = 1000;
@@ -37,6 +39,28 @@ fn create_node(comptime T: type, allocator: std.mem.Allocator, data: T) !*std.Do
     node.*.next = null;
     node.*.data = data;
     return node;
+}
+
+fn random_burger_position(random_generator: std.rand.Random, player_parts: PlayerPartList) struct { x: u16, y: u16 } {
+    while (true) {
+        var x: u16 = random_generator.int(u16) % game_width;
+        var y: u16 = random_generator.int(u16) % game_height;
+
+        var valid_position = true;
+
+        var optional_node = player_parts.first;
+        while (optional_node) |node| {
+            if (node.*.data.unit_x == x and node.*.data.unit_y == y) {
+                valid_position = false;
+            }
+
+            optional_node = node.next;
+        }
+
+        if (valid_position) {
+            return .{ .x = x, .y = y };
+        }
+    }
 }
 
 pub fn main() !void {
@@ -77,10 +101,13 @@ pub fn main() !void {
     var player_x: u32 = initial_head_x;
     var player_y: u32 = initial_head_y;
 
+    var random_generator = std.rand.DefaultPrng.init(@intCast(std.time.timestamp()));
+
     var player_direction: Direction = Direction.right;
 
-    const PlayerPartList = std.DoublyLinkedList(PlayerPart);
     var player_tail = PlayerPartList{};
+
+    var burger_pos = random_burger_position(random_generator.random(), player_tail);
 
     // Destroy everything in the linked list.
     defer {
@@ -119,10 +146,14 @@ pub fn main() !void {
             }
         }
 
+        if (player_x == burger_pos.x and player_y == burger_pos.y) {
+            burger_pos = random_burger_position(random_generator.random(), player_tail);
+        }
+
         raylib.BeginDrawing();
 
         raylib.DrawTexture(crate_background.texture, 0, 0, raylib.WHITE);
-        raylib.DrawTexture(burger_texture, 400, 200, raylib.WHITE);
+        raylib.DrawTexture(burger_texture, @intCast(burger_pos.x * unit_size), @intCast(burger_pos.y * unit_size), raylib.WHITE);
 
         {
             var node = player_tail.first;
