@@ -16,8 +16,11 @@ const PlayerPart = struct {
 const window_width = 1400;
 const window_height = 1000;
 
+// Measured in units.
 const initial_head_x = 4;
 const initial_head_y = 5;
+const game_width = window_width / unit_size;
+const game_height = window_height / unit_size;
 
 // Measured in pixels.
 const unit_size = 100;
