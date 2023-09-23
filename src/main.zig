@@ -30,7 +30,7 @@ const unit_size = 100;
 
 // Measured in frames.
 const frames_per_second = 60;
-const movement_delay = frames_per_second / 3;
+const movement_delay = frames_per_second / 4;
 
 const Direction = enum { left, right, up, down };
 
