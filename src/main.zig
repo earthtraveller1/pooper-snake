@@ -21,11 +21,15 @@ const Rotation = struct {
 const window_width = 1400;
 const window_height = 1000;
 
+const initial_head_x = 4;
+const initial_head_y = 5;
+
 // Measured in pixels.
 const unit_size = 100;
 
-// Measured in units per second.
-const player_speed = 6;
+// Measured in frames.
+const frames_per_second = 60;
+const movement_delay = frames_per_second / 2;
 
 const Direction = enum { left, right, up, down };
 
@@ -36,7 +40,7 @@ pub fn main() !void {
     raylib.InitWindow(window_width, window_height, "Pooper Snake");
     defer raylib.CloseWindow();
 
-    raylib.SetTargetFPS(60);
+    raylib.SetTargetFPS(frames_per_second);
 
     const can_pooper_image = raylib.LoadImageFromMemory(".png", assets.canpooper_png, assets.canpooper_png.len);
     const can_pooper_texture = raylib.LoadTextureFromImage(can_pooper_image);
@@ -67,19 +71,30 @@ pub fn main() !void {
 
     var delta_time: f64 = 0;
 
+    var player_x: u32 = initial_head_x;
+    var player_y: u32 = initial_head_y;
+
+    var movement_countdown: i16 = movement_delay;
+
     while (!raylib.WindowShouldClose()) {
         const start_time = raylib.GetTime();
+
+        if (movement_countdown <= 0) {
+            movement_countdown = movement_delay;
+            player_y += 1;
+        }
 
         raylib.BeginDrawing();
 
         raylib.DrawTexture(crate_background.texture, 0, 0, raylib.WHITE);
 
-        raylib.DrawTexture(can_pooper_texture, 100, 100, raylib.WHITE);
+        raylib.DrawTexture(can_pooper_texture, @intCast(player_x * unit_size), @intCast(player_y * unit_size), raylib.WHITE);
         raylib.DrawTexture(burger_texture, 400, 200, raylib.WHITE);
 
         raylib.EndDrawing();
 
         const end_time = raylib.GetTime();
         delta_time = start_time - end_time;
+        movement_countdown -= 1;
     }
 }
