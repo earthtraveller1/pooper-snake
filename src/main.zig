@@ -69,16 +69,12 @@ pub fn main() !void {
 
     raylib.UnloadTexture(crate_texture);
 
-    var delta_time: f64 = 0;
-
     var player_x: u32 = initial_head_x;
     var player_y: u32 = initial_head_y;
 
     var movement_countdown: i16 = movement_delay;
 
     while (!raylib.WindowShouldClose()) {
-        const start_time = raylib.GetTime();
-
         if (movement_countdown <= 0) {
             movement_countdown = movement_delay;
             player_y += 1;
@@ -93,8 +89,6 @@ pub fn main() !void {
 
         raylib.EndDrawing();
 
-        const end_time = raylib.GetTime();
-        delta_time = start_time - end_time;
         movement_countdown -= 1;
     }
 }
